@@ -1,0 +1,162 @@
+## This is an example that scrapes applications between 10-02-2022 and 11-02-2022.
+
+description_text = []
+address_text = []
+meta_text = []
+decision_text = []
+date_text = []
+current_url = []
+
+weeks = ['07-02-2022', '14-02-2022']
+
+# Configuring the driver and setting a default wait time of 10 seconds- not utilising the headless browser as it causes an error
+driver = webdriver.Chrome()
+wait = WebDriverWait(driver, 10)
+
+# Enter relevant urls
+urls = ['https://developmentandhousing.hackney.gov.uk/planning/index.html?fa=getReceivedWeeklyList',
+        'https://online-befirst.lbbd.gov.uk/planning/index.html?fa=getReceivedWeeklyList',
+        'https://builtenvironment.walthamforest.gov.uk/planning/index.html?fa=getReceivedWeeklyList']
+
+for url in urls:
+    for i in range(len(weeks)):
+        while (i + 1) <= len(weeks):
+            driver.get(url) # Starting the Chromedriver and getting the URL
+            time.sleep(2)
+
+            # Clicking on the week search box
+            week_input = driver.find_element(By.XPATH, '//input[@class="form-control weekpicker"]')
+            week_input.click()
+            time.sleep(1)
+
+            # Clearing the placeholder text
+            week_input.clear()
+
+            # Inputting the week
+            week_input.send_keys(weeks[i])
+            time.sleep(2)
+
+            # Finding and clicking the 'Search' button
+            search_button = driver.find_element(By.XPATH, "//button[@class='btn btn-sm btn-success']")
+            search_button.click()
+            time.sleep(3)
+
+            # Identifiying all application links on the page
+            page_links = driver.find_elements(By.XPATH,'//tbody/tr')
+            x = len(page_links)
+
+            # For each application
+            for page in range(x):
+                t = int(page+1) # Appending the link number for error resolving purposes
+
+                try:
+                    # Click the 'View More' button to go to the application details
+                    view_more_btn = driver.find_element(By.XPATH, (f'//tbody//tr[{t}]//td[6]//a'))
+                    view_more_btn.click()
+                    time.sleep(5)
+
+                    # Switch to the newly-opened tab
+                    driver.switch_to.window(driver.window_handles[-1])
+
+                    # Finding all elements with the XPATH of the description field
+                    desc = driver.find_elements(By.XPATH, '//strong[contains(text(), "Proposal:")]/following::div[1]')
+                    # Finding all elements with the XPATH of the address field
+                    address = driver.find_elements(By.XPATH, '//strong[contains(text(), "Location:")]/following::div[1]')
+                    # Finding all elements with the XPATH of the metadata field
+                    meta = driver.find_elements(By.XPATH, '//strong[contains(text(), "Application Reference Number:")]/following::div[1]')
+                    # Finding all elements with the XPATH of the date field
+                    date = driver.find_elements(By.XPATH, '//strong[contains(text(), "Received Date:")]/following::div[1]')
+
+                    # For each element returned, appending the text to the relevant list
+                    for d in desc:
+                        description_text.append(d.text)
+                        c_url = str(url)
+                        current_url.append(str(c_url)) # Appending the current URL of the page being scraped
+                    for a in address:
+                        address_text.append(a.text)
+                    for m in meta:
+                        meta_text.append(m.text)
+                    for dt in date:
+                        date_text.append(dt.text)
+
+                    # If there is a decision field present
+                    try:
+                      decision = driver.find_elements(By.XPATH, '//div[@class="row pad-bottom-5"][11]/div[2]')
+                      decision_text.append([ds.text for ds in decision])
+
+                    except:
+                      decision_text.append(['No decision made'])
+
+                    # Close the tab
+                    driver.close()
+
+                    # Return to main window and wait for 10 seconds
+                    driver.switch_to.window(driver.window_handles[0])
+                    time.sleep(10)
+
+                # If the above fails
+                except:
+                    # Finding all elements with the XPATH of the description field
+                    desc = driver.find_elements(By.XPATH, (f'//tr[{t}]//td[3]'))
+                    # Finding all elements with the XPATH of the description field
+                    address = driver.find_elements(By.XPATH, (f'//tr[{t}]//td[2]'))
+                    # Finding all elements with the XPATH of the description field
+                    meta = driver.find_elements(By.XPATH, (f'//tr[{t}]//td[1]'))
+
+                    # For each element returned, appending the text to the relevant list
+                    for d in desc:
+                        description_text.append(d.text)
+                        c_url = str(url)
+                        current_url.append(str(c_url)) # Appending the current URL of the page being scraped
+                    for a in address:
+                        address_text.append(a.text)
+                    for m in meta:
+                        meta_text.append(m.text)
+                    decision_text.append(['No decision made'])
+
+                    # Try to find the date field and append to the list
+                    try:
+                        date_text.append([date_text[-1]])
+                    except:
+                        date_text.append(['No date'])
+
+            break # Once complete, move to the next week
+
+# Creating a dictionary to combine each list
+dic = {'description': description_text, 'address': address_text, 'metadata': meta_text, 'decision': decision_text, 'authority': current_url, 'date': date_text}
+
+# Creating a dataframe from the dictionary
+hackney_bd_wf = pd.DataFrame.from_dict(dic, orient = 'index')
+
+# Transposing the dataframe
+hackney_bd_wf = hackney_bd_wf.transpose()
+
+# Dropping duplicate metadata (application reference) values
+hackney_bd_wf = hackney_bd_wf.drop_duplicates(subset = ["metadata"], keep = 'first')
+
+# Replacing the relevant URL with the relevant planning authority
+hackney_bd_wf['authority'] = hackney_bd_wf['authority'].str.replace('https://developmentandhousing.hackney.gov.uk/planning/index.html?fa=getReceivedWeeklyList','Hackney')
+hackney_bd_wf['authority'] = hackney_bd_wf['authority'].str.replace('https://online-befirst.lbbd.gov.uk/planning/index.html?fa=getReceivedWeeklyList','Barking & Dagenham')
+hackney_bd_wf['authority'] = hackney_bd_wf['authority'].str.replace('https://builtenvironment.walthamforest.gov.uk/planning/index.html?fa=getReceivedWeeklyList','Waltham Forest')
+
+# Saving the output to a CSV
+hackney_bd_wf.to_csv('hackney_bd_wf_example.csv')
+
+# Closing the driver to prevent continual running
+driver.quit()
+
+# Converting the date column to datetime format
+hackney_bd_wf['date'] = pd.to_datetime(hackney_bd_wf['date'], errors = 'coerce' , format = '%d-%m-%Y')
+
+# Dropping applications with a date before 01-01-2022
+hackney_bd_wf = hackney_bd_wf_import[~(hackney_bd_wf['date'] < '01-01-2022')]
+
+# Dropping applications with a date after 31-03-2022
+hackney_bd_wf = hackney_bd_wf[~(hackney_bd_wf['date'] > '31-03-2022')]
+
+# Dropping the now unnecessary 'date' column
+hackney_bd_wf = hackney_bd_wf.drop(['date'], axis = 1)
+
+# Viewing the head of the dataframe and checking the number of applications scraped from each portal
+print(f'''Number of applications scraped: {len(hackney_bd_wf)}
+{hackney_bd_wf.authority.value_counts()}''')
