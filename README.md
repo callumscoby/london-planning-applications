@@ -29,7 +29,7 @@ system to mitigate urban challenges.</p>
 
 <p>(L-R): Success rates of planning applications across London LSOA; Modal application type across London LSOA</p>
 
-<p>Check out the <a href="https://github.com/callumscoby/networkh3/blob/main/examples.ipynb">code</a> used to scrape the planning applications, the entire analysis Jupyter  <a href="https://github.com/callumscoby/networkh3/blob/main/examples.ipynb">notebook</a>, or the written policy <a href="https://github.com/callumscoby/networkh3/blob/main/examples.ipynb">briefing</a></p>
+<p>Check out the Jupyter  <a href="https://github.com/callumscoby/networkh3/blob/main/examples.ipynb">notebook</a> or the written policy <a href="https://github.com/callumscoby/networkh3/blob/main/examples.ipynb">briefing</a></p>
 
 
 ## Contact
