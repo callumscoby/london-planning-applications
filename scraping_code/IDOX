@@ -1,6 +1,7 @@
 ## This is an example that scrapes applications from the City of London planning portal between 10-02-2022 and 11-02-2022.
 
 # Function to calculate the dates in the given range according to the step interval chosen (1 in this example)
+
 def date_range(start_date, end_date):
     for d in range(0, int((end_date - start_date).days) + 1, 1): # Modify the step interval
         yield start_date + timedelta(d)
@@ -16,7 +17,7 @@ for dt in date_range(start_date, end_date):
     dt = dt.strftime('%d/%m/%Y')
     date_idox.append(dt)
 
-print(date_idox)
+# Scraping
 
 description_text = []
 address_text = []
@@ -33,7 +34,7 @@ driver = webdriver.Chrome()
 wait = WebDriverWait(driver, 10)
 
 # Enter relevant url
-url = 'https://www.planning2.cityoflondon.gov.uk/online-applications/search.do?action=advanced'
+url = 'https://www.planning2.cityoflondon.gov.uk/online-applications/search.do?action=advanced' # Convert to list to include more IDOX URL's
 
 for i in range(len(date_idox)):
     while (i + 1) < len(date_idox):
@@ -515,21 +516,21 @@ decision_text = [item for sublist in decision_text for item in sublist]
 dic = {'description': description_text, 'address': address_text, 'metadata': meta_text, 'decision': decision_text}
 
 # Creating a dataframe from the dictionary
-example_feb = pd.DataFrame.from_dict(dic, orient = 'index')
+example = pd.DataFrame.from_dict(dic, orient = 'index')
 
 # Transposing the dataframe
-example_feb = example_feb.transpose()
+example = example.transpose()
 
 # Dropping duplicate metadata (application reference) values
-example_feb = example_feb.drop_duplicates(subset = ["metadata"], keep = 'first')
+example = example.drop_duplicates(subset = ["metadata"], keep = 'first')
 
 # Saving the output to a CSV
-example_feb.to_csv('example_feb.csv')
+example.to_csv('example.csv')
 
 # Viewing the head of the dataframe and checking the length
-display(example_feb.head(5))
+display(example.head(5))
 
-print(f'Number of applications scraped in {url}: {len(example_feb)}')
+print(f'Number of applications scraped in {url}: {len(example)}')
 
 # Closing the driver to prevent continual running
 driver.quit()
