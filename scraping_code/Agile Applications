@@ -1,0 +1,235 @@
+## This is an example that scrapes applications between 10-02-2022 and 11-02-2022.
+
+# Function to click through the pages returned
+
+def click_through_pages(i):
+    # Wait until the page link is clickable
+    wait.until(EC.element_to_be_clickable((By.XPATH,
+                                           '//div[@class="sas-table table-responsive hidden-xs hidden-sm"]//table[@name="results"]//tbody//tr')))
+
+    # Click relevant page link (i) and wait for 3 seconds
+    element = driver.find_elements(By.XPATH, '//div[@class="sas-table table-responsive hidden-xs hidden-sm"]//table[@name="results"]//tbody//tr')[i]
+    element.click()
+    time.sleep(3)
+
+    # Find the 'decision' element and append the text to the list
+    decision = driver.find_elements(By.XPATH, '//*[@id="summaryTab"]/form/div[13]')
+    decision_text.append([ds.text for ds in decision])
+
+    # Return to the previous page of the list of pages
+    driver.back()
+
+description_text = []
+address_text = []
+meta_text = []
+decision_text = []
+page_numbers = []
+current_url = []
+
+# Setting the browser to headless mode- this reduces runtime and memory usage
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+
+# Configuring the driver and setting the default wait time to 10 seconds
+driver = webdriver.Chrome()
+wait = WebDriverWait(driver, 10)
+
+# Enter relevant urls
+urls = ['https://planning.redbridge.gov.uk/redbridge/search-applications/',
+        'https://planning.agileapplications.co.uk/opdc/search-applications/']
+
+for url in urls:
+    driver.get(url) # Starting the Chromedriver, getting the URL and waiting 10 seconds
+    time.sleep(10)
+
+    # Finding and accepting the terms and conditions
+    termsandconditions = driver.find_element(By.XPATH, '//*[@id="header"]/sas-cookie-consent/section/section/div[1]/button[1]')
+    termsandconditions.click()
+    time.sleep(3)
+
+    # Selecting button to open Advanced Search options
+    adv_search_button = driver.find_element(By.XPATH, '//label[contains(text(), "Advanced search")]')
+    adv_search_button.click()
+    time.sleep(2)
+
+    # Inputting start and end dates into their respective fields
+    date_input = driver.find_element(By.XPATH, "//input[@placeholder='Enter registration date...']")
+    date_input.send_keys('10/02/2022 - 11/02/2022')
+
+    # Clicking the 'Search' button and waiting for 10 seconds
+    search_button = driver.find_element(By.XPATH, "//button[@ID='btnSearch']")
+    search_button.click()
+    time.sleep(10)
+
+    # Whilst there is a last page to click (in the case of Redbridge)
+    try:
+        # Find the page number of the last page
+        last_page = driver.find_element(By.XPATH, '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/div/div/div/ul/li[10]/a/span')
+        last_page_no = int(last_page.text)
+
+        anything = True
+        while anything == True:
+            # Get current page number
+            current_page_number = int(driver.find_element(By.XPATH, "//li[@class='page-item ng-scope active']").text)
+
+            # If current page number is less than the last page number
+            if current_page_number < last_page_no:
+                # And if current page number has not already been clicked
+                if current_page_number not in page_numbers:
+                    # Append the current page number
+                    page_numbers.append(int(current_page_number))
+
+                    # Finding all elements with the XPATH of the description field
+                    desc = driver.find_elements(By.XPATH,
+                                                '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[2]')
+                    # Finding all elements with the XPATH of the address field
+                    address = driver.find_elements(By.XPATH,
+                                                   '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[3]')
+                    # Finding all elements with the XPATH of the metadata field
+                    meta = driver.find_elements(By.XPATH,
+                                                '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[1]')
+
+                    # For each element returned, appending the text to the relevant list
+                    description_text.append([d.text for d in desc])
+                    c_url = str(url)
+                    current_url.append(str(c_url)) # Appending the current URL of the page being scraped
+                    address_text.append([a.text for a in address])
+                    meta_text.append([m.text for m in meta])
+
+                    # Click through all page links on the page and scrape the decision field
+                    page_links = driver.find_elements(By.XPATH,'//div[@class="sas-table table-responsive hidden-xs hidden-sm"]//table[@name="results"]//tbody//tr')
+                    x = len(page_links)
+                    [click_through_pages(i) for i in range(x)]
+
+                    # Once complete, wait 14 seconds, click the next page button, and wait 10 seconds
+                    time.sleep(4)
+                    next_page_button = wait.until(EC.element_to_be_clickable((By.XPATH,'//a[contains(text(), "»")]')))
+                    time.sleep(10)
+                    next_page_button.click()
+                    time.sleep(10)
+
+                # Else if current page number has already been clicked, move to the next page
+                elif current_page_number in page_numbers:
+                    next_page_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//a[contains(text(), "»")]')))
+                    next_page_button.click()
+                    time.sleep(2)
+
+            # Else if the current page number is equal to the last page number
+            else:
+                # Get the number of links on the page
+                page_links = driver.find_elements(By.XPATH, '//div[@class="sas-table table-responsive hidden-xs hidden-sm"]//table[@name="results"]//tbody//tr')
+                x = len(page_links)
+
+                # Finding all elements with the XPATH of the description field
+                desc = driver.find_elements(By.XPATH,
+                                            '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[2]')
+                # Finding all elements with the XPATH of the address field
+                address = driver.find_elements(By.XPATH,
+                                               '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[3]')
+                # Finding all elements with the XPATH of the metadata field
+                meta = driver.find_elements(By.XPATH,
+                                            '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[1]')
+
+                # For each element returned, appending the text to the relevant list
+                description_text.append([d.text for d in desc])
+                c_url = str(url)
+                current_url.append(str(c_url)) # Appending the current URL of the page being scraped
+                address_text.append([a.text for a in address])
+                meta_text.append([m.text for m in meta])
+
+                # Click through all page links on the page and scrape the decision field
+                [click_through_pages(i) for i in range(x)]
+                anything = False # Move on to the next URL
+
+    # If there is no last page to click on (in the case of OPDC)
+    except:
+        anything = True
+        while anything == True:
+            # Get the current page number
+            current_page_number = int(driver.find_element(By.XPATH, "//li[@class='page-item ng-scope active']").text)
+            # If current page number is less than 6 (manually found maximum page number)
+            if current_page_number < 6:
+                # Finding all elements with the XPATH of the description field
+                desc = driver.find_elements(By.XPATH,
+                                            '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[2]')
+                # Finding all elements with the XPATH of the address field
+                address = driver.find_elements(By.XPATH,
+                                               '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[3]')
+                # Finding all elements with the XPATH of the metadata field
+                meta = driver.find_elements(By.XPATH,
+                                            '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[1]')
+
+                # For each element returned, appending the text to the relevant list
+                description_text.append([d.text for d in desc])
+                c_url = str(url)
+                current_url.append(str(c_url)) # Appending the current URL of the page being scraped
+                address_text.append([a.text for a in address])
+                meta_text.append([m.text for m in meta])
+
+                # Click through all page links on the page and scrape the decision field
+                page_links = driver.find_elements(By.XPATH,'//div[@class="sas-table table-responsive hidden-xs hidden-sm"]//table[@name="results"]//tbody//tr')
+                x = len(page_links)
+                [click_through_pages(i) for i in range(x)]
+
+                # Once complete, wait 14 seconds, click the next button, and wait for 10 seconds
+                time.sleep(4)
+                next_page_button = wait.until(EC.element_to_be_clickable((By.XPATH,'//a[contains(text(), "»")]')))
+                time.sleep(10)
+                next_page_button.click()
+                time.sleep(10)
+
+            # Else if current page number is equal to 6 (the last page number)
+            elif current_page_number == 6:
+                # Get the number of links on the page
+                page_links = driver.find_elements(By.XPATH, '//div[@class="sas-table table-responsive hidden-xs hidden-sm"]//table[@name="results"]//tbody//tr')
+                x = len(page_links)
+
+                # Finding all elements with the XPATH of the description field
+                desc = driver.find_elements(By.XPATH,
+                                            '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[2]')
+                # Finding all elements with the XPATH of the address field
+                address = driver.find_elements(By.XPATH,
+                                               '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[3]')
+                # Finding all elements with the XPATH of the metadata field
+                meta = driver.find_elements(By.XPATH,
+                                            '//*[@id="ui-view"]/search-applications-results/section/sas-table/div[1]/table/tbody/tr/td[1]')
+
+                # For each element returned, appending the text to the relevant list
+                description_text.append([d.text for d in desc])
+                c_url = str(url)
+                current_url.append(str(c_url)) # Appending the current URL of the page being scraped
+                address_text.append([a.text for a in address])
+                meta_text.append([m.text for m in meta])
+
+                # Click through all page links on the page and scrape the decision field
+                [click_through_pages(i) for i in range(x)]
+                anything = False # Close while loop
+
+                break
+
+# Flattening the lists of descriptions, addresses, metadata, and decisions
+description_text = [item for sublist in description_text for item in sublist]
+address_text = [item for sublist in address_text for item in sublist]
+meta_text = [item for sublist in meta_text for item in sublist]
+decision_text = [item for sublist in decision_text for item in sublist]
+
+# Creating a dictionary to combine each list
+dic = {'description': description_text, 'address': address_text, 'metadata': meta_text, 'decision': decision_text, 'authority': current_url}
+
+# Creating a dataframe from the dictionary
+redbridge_opdc = pd.DataFrame.from_dict(dic, orient = 'index')
+
+# Transposing the dataframe
+redbridge_opdc = redbridge_opdc.transpose()
+
+# Dropping duplicate metadata (application reference) values
+redbridge_opdc = redbridge_opdc.drop_duplicates(subset = ["metadata"], keep = 'first')
+
+# Replacing the relevant URL with the relevant planning authority
+redbridge_opdc = redbridge_opdc.replace({'https://planning.redbridge.gov.uk/redbridge/search-applications/': 'Redbridge', 'https://planning.agileapplications.co.uk/opdc/search-applications/': 'OPDC'}, regex=True)
+
+# Saving the output to a CSV
+redbridge_opdc.to_csv('redbridge_opdc_example.csv')
+
+# Closing the driver to prevent continual running
+driver.quit()
