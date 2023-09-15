@@ -24,8 +24,8 @@ system to mitigate urban challenges.</p>
 
 
 <p>
-<img src="https://raw.githubusercontent.com/callumscoby/london-planning-applications/main/PA_Success_Rate.png" height="258px" />
-<img src="https://raw.githubusercontent.com/callumscoby/london-planning-applications/main/PA_Modal_Type.png" height="258px" />
+<img src="https://raw.githubusercontent.com/callumscoby/london-planning-applications/main/examples/PA_Success_Rate.png" height="258px" />
+<img src="https://raw.githubusercontent.com/callumscoby/london-planning-applications/main/examples/PA_Modal_Type.png" height="258px" />
 
 
 
