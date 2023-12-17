@@ -2,7 +2,7 @@
 
 <p>This work, produced for my Urban Data Science and Analytics Masters dissertation, scraped over 30,000 planning applications from London planning authorities. It uses the applications to understand how the quantity and success rate of applications vary spatially amongst London LSOA and planning authorities, and whether such variation is associated with geodemographic characteristics. It also identifies the spatial distribution of different application types and ascertains the factors that affect the odds of a successful outcome of a planning application. The insights are discussed in the context of urban challenges and so the role of the planning system in mitigating or compounding urban challenges is evaluated.
 
-Methods such as LDA and BERTopic topic modelling, Google Maps Geocoding API, KNN spatial clustering, Geographically Weighted Regression, Logistic Binary Regression, SVM, and Random Forests are employed. </p>
+Methods such as LDA and BERTopic topic modelling, KNN spatial clustering, Geographically Weighted Regression, Logistic Binary Regression, SVM, and Random Forests are employed. </p>
 
 ## Abstract
 <p> Despite the importance of planning permission for development of the built environment and
